@@ -2,7 +2,6 @@ const form = document.querySelector(".search__form");
 const resultsContainer = document.querySelector(".search__findings-list");
 const countContainer = document.querySelector(".search__findings");
 const errorContainer = document.querySelector(".search__error");
-const url = "https://api.nomoreparties.co/github-search?q=";
 
 const renderError = () => {
   errorContainer.innerHTML = `
@@ -14,7 +13,7 @@ const renderError = () => {
   countContainer.innerHTML = "";
 };
 
-function renderEmptyResults() {
+const renderEmptyResults = () => {
   errorContainer.innerHTML = `
         <img src="https://code.s3.yandex.net/web-code/entrance-test/search.svg" alt="" class="search__error-icon" />
         <p class="search__error-message">
@@ -22,7 +21,7 @@ function renderEmptyResults() {
         </p>
   `;
   countContainer.innerHTML = "";
-}
+};
 
 const renderCount = (count) => {
   countContainer.innerHTML = `
@@ -50,29 +49,24 @@ function template(item) {
 }
 
 async function onSubmit(event) {
-  // ваш код
   event.preventDefault();
   onSubmitStart();
-  fetch(url + form.elements[0].value)
-    .then((responce) => responce.json())
-    .then((json) => {
-      jsonData = json.items;
-      console.log(jsonData);
-      renderCount(json.total_count);
-      for (let property in jsonData) {
-        //template(json[property]);
-        //console.log(property);
-        let newElement = template(jsonData[property]);
-        // console.log(jsonData[property]);
-        // console.log(newElement);
-
-        resultsContainer.append(newElement);
-        // Надо добить если пустой запрос
+  await fetch(
+    `https://api.nomoreparties.co/github-search?q=${event.target.elements["title"].value}`
+  )
+    .then((r) => r.json())
+    .then((data) => {
+      const { items, total_count } = data;
+      if (total_count) {
+        renderCount(total_count);
+        items.forEach((item) => resultsContainer.appendChild(template(item)));
+      } else {
+        renderEmptyResults();
       }
     })
-    .catch((error) => renderError());
-
-  //console.log(url + form.elements[0].value);
+    .catch(() => {
+      renderError();
+    });
 }
 
 form.addEventListener("submit", onSubmit);
